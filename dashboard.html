@@ -117,37 +117,18 @@ body { width:100vw; height:100vh; overflow:hidden; font-family:'Outfit','Noto Sa
 </div>
 
 <script>
-// ── 위키미디어 POTY 사진 (직접 upload.wikimedia.org CDN URL) ──
-// CSS background-image는 CORS 없음, 리다이렉트도 자동 처리
+// ── 위키미디어 POTY 사진 (Special:FilePath → CDN 리다이렉트) ──
+const W = (f) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(f)}?width=1920`;
+
 const POTY = [
-  {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Campamento_de_ganado_de_la_tribu_Mundari%2C_Terekeka%2C_Sud%C3%A1n_del_Sur%2C_2024-01-29%2C_DD_242.jpg/1920px-Campamento_de_ganado_de_la_tribu_Mundari%2C_Terekeka%2C_Sud%C3%A1n_del_Sur%2C_2024-01-29%2C_DD_242.jpg',
-    title: '무운다리 부족 소 목장, 남수단', credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥇'
-  },
-  {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Incense_in_Vietnam.jpg/1920px-Incense_in_Vietnam.jpg',
-    title: '향 만들기, 쾅푸까우, 베트남', credit: 'Vietsui / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥇'
-  },
-  {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Hunter_baby_chameleon.jpg/1920px-Hunter_baby_chameleon.jpg',
-    title: '아기 카멜레온, 터키', credit: 'Mkrc85 / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥉'
-  },
-  {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Foggy_Fanal_forest_in_Seixal%2C_Porto_Moniz%2C_Madeira%2C_2023_May.jpg/1920px-Foggy_Fanal_forest_in_Seixal%2C_Porto_Moniz%2C_Madeira%2C_2023_May.jpg',
-    title: '파나우 숲의 안개, 마데이라', credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2023 finalist'
-  },
-  {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Kom%C3%A9ta_C-2020_F3_%28NEOWISE%29.jpg/1920px-Kom%C3%A9ta_C-2020_F3_%28NEOWISE%29.jpg',
-    title: 'NEOWISE 혜성', credit: 'Wikimedia POTY 2023 finalist · CC-BY-SA 4.0'
-  },
-  {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Phalacrocorax_carbo%2C_Egretta_garzetta_and_Mareca_strepera_in_Taudha_Lake.jpg/1920px-Phalacrocorax_carbo%2C_Egretta_garzetta_and_Mareca_strepera_in_Taudha_Lake.jpg',
-    title: '타우다하 호수의 새들, 네팔', credit: 'Prasan Shrestha / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥇'
-  },
-  {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Banna_children_playing_on_wooden_stilts.jpg/1920px-Banna_children_playing_on_wooden_stilts.jpg',
-    title: '에티오피아 바나 부족 어린이들', credit: 'WAVRIK / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥈'
-  },
+  { url: W('Campamento de ganado de la tribu Mundari, Terekeka, Sudán del Sur, 2024-01-29, DD 242.jpg'), title: '무운다리 부족 소 목장, 남수단', credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥇' },
+  { url: W('Incense in Vietnam.jpg'),                                                                     title: '향 만들기, 쾅푸까우, 베트남',    credit: 'Vietsui / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥇' },
+  { url: W('Hunter baby chameleon.jpg'),                                                                  title: '아기 카멜레온, 터키',            credit: 'Mkrc85 / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥉' },
+  { url: W('Foggy Fanal forest in Seixal, Porto Moniz, Madeira, 2023 May.jpg'),                          title: '파나우 숲의 안개, 마데이라',     credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2023 finalist' },
+  { url: W('Kométa C-2020 F3 (NEOWISE).jpg'),                                                           title: 'NEOWISE 혜성',                 credit: 'Wikimedia POTY 2023 finalist · CC-BY-SA 4.0' },
+  { url: W('Phalacrocorax carbo, Egretta garzetta and Mareca strepera in Taudha Lake.jpg'),              title: '타우다하 호수의 새들, 네팔',     credit: 'Prasan Shrestha / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥇' },
+  { url: W('Banna children playing on wooden stilts.jpg'),                                               title: '에티오피아 바나 부족 어린이들',  credit: 'WAVRIK / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥈' },
+  { url: W('Fratercula arctica in flight, Borgarfjörður eystri, Iceland, 20240717 1136 1678.jpg'),       title: '대서양 퍼핀, 아이슬란드',       credit: 'Jakub Hałun / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥈' },
 ];
 
 let bgActive = 'a';
@@ -155,29 +136,27 @@ let bgIdx = 0;
 
 function applyBg(idx, fade = true) {
   const photo = POTY[idx];
-  if (fade) {
-    const nextId = bgActive === 'a' ? 'b' : 'a';
-    const layerNext = document.getElementById(`bg-${nextId}`);
-    const layerCurr = document.getElementById(`bg-${bgActive}`);
-    // 이미지 미리 로드 후 표시
-    const img = new Image();
-    img.onload = () => {
+  const img = new Image();
+  img.onload = () => {
+    if (fade) {
+      const nextId = bgActive === 'a' ? 'b' : 'a';
+      const layerNext = document.getElementById(`bg-${nextId}`);
+      const layerCurr = document.getElementById(`bg-${bgActive}`);
       layerNext.style.backgroundImage = `url('${photo.url}')`;
       setTimeout(() => {
         layerNext.style.opacity = '1';
         layerCurr.style.opacity = '0';
         bgActive = nextId;
       }, 100);
-    };
-    img.src = photo.url;
-  } else {
-    const layer = document.getElementById(`bg-${bgActive}`);
-    layer.style.backgroundImage = `url('${photo.url}')`;
-  }
-  document.getElementById('photo-credit').innerHTML = `${photo.title}<br>${photo.credit}`;
+    } else {
+      document.getElementById(`bg-${bgActive}`).style.backgroundImage = `url('${photo.url}')`;
+    }
+    document.getElementById('photo-credit').innerHTML = `${photo.title}<br>${photo.credit}`;
+  };
+  img.src = photo.url;
 }
 
-// 첫 사진 즉시 적용
+// 첫 사진 로드
 applyBg(0, false);
 
 // 5분마다 전환
