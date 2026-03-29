@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500&family=Outfit:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:100vw; height:100vh; overflow:hidden; font-family:'Outfit','Noto Sans KR',sans-serif; color:#fff; background:#111; }
+
+.bg-layer {
+  position:fixed; inset:0;
+  background-size:cover; background-position:center;
+  transition:opacity 2s ease;
+}
+.bg-layer::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to bottom,
+    rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.15) 35%,
+    rgba(0,0,0,0.15) 65%, rgba(0,0,0,0.68) 100%);
+}
+#bg-a { z-index:1; opacity:1; }
+#bg-b { z-index:2; opacity:0; }
+
+#photo-credit {
+  position:fixed; bottom:10px; right:16px;
+  font-size:0.55rem; font-weight:300;
+  color:rgba(255,255,255,0.3); letter-spacing:0.5px;
+  z-index:5; text-align:right; line-height:1.7; pointer-events:none;
+}
+
+#app {
+  position:relative; z-index:3;
+  width:100vw; height:100vh;
+  display:grid; grid-template-rows:1fr auto;
+  padding:38px 46px 34px;
+}
+.top-row { display:grid; grid-template-columns:1fr auto; align-items:start; gap:32px; }
+.bottom-row { display:grid; grid-template-columns:auto 1fr auto; align-items:end; gap:40px; }
+
+.clock { font-family:'Outfit',sans-serif; font-weight:100; font-size:7rem; letter-spacing:-2px; text-shadow:0 2px 24px rgba(0,0,0,0.5); line-height:1; }
+.date-line { font-weight:300; font-size:1.05rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.7); margin-top:7px; }
+
+.weather-block { text-align:right; padding-top:6px; }
+.weather-icon-big { font-size:2.6rem; line-height:1; margin-bottom:4px; }
+.weather-temp-big { font-family:'Outfit',sans-serif; font-weight:100; font-size:4.2rem; line-height:1; letter-spacing:-1px; }
+.weather-desc { font-weight:300; font-size:0.9rem; color:rgba(255,255,255,0.65); margin-top:5px; letter-spacing:1px; }
+.weather-sub { font-weight:300; font-size:0.72rem; color:rgba(255,255,255,0.45); margin-top:7px; line-height:1.9; }
+
+.cal-month-label { font-weight:200; font-size:0.75rem; letter-spacing:4px; text-transform:uppercase; color:rgba(255,255,255,0.45); margin-bottom:13px; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,34px); gap:2px; text-align:center; }
+.cal-dow { font-size:0.58rem; font-weight:300; color:rgba(255,255,255,0.3); letter-spacing:1px; padding-bottom:7px; }
+.cal-dow.sun { color:rgba(255,110,110,0.5); } .cal-dow.sat { color:rgba(100,150,255,0.5); }
+.cal-day { font-size:0.75rem; font-weight:300; color:rgba(255,255,255,0.4); border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; margin:auto; }
+.cal-day.today { background:rgba(255,255,255,0.88); color:#111; font-weight:500; }
+.cal-day.sun { color:rgba(255,110,110,0.6); } .cal-day.sat { color:rgba(100,150,255,0.6); } .cal-day.other { color:rgba(255,255,255,0.15); }
+
+.news-label { font-size:0.58rem; font-weight:300; letter-spacing:4px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:13px; }
+.news-pages { position:relative; }
+.news-page { opacity:0; transition:opacity 0.8s ease; pointer-events:none; position:absolute; inset:0; display:flex; flex-direction:column; }
+.news-page.active { opacity:1; position:relative; pointer-events:auto; }
+.news-item { display:flex; align-items:baseline; gap:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.07); }
+.news-item:last-child { border-bottom:none; }
+.news-idx { font-family:'Outfit',sans-serif; font-weight:100; font-size:0.95rem; color:rgba(255,255,255,0.18); flex-shrink:0; width:18px; text-align:right; }
+.news-content { flex:1; min-width:0; }
+.news-meta { font-size:0.57rem; font-weight:300; color:rgba(255,255,255,0.3); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px; }
+.news-title { font-size:1.08rem; font-weight:300; color:rgba(255,255,255,0.88); line-height:1.38; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.stocks-label { font-size:0.58rem; font-weight:300; letter-spacing:4px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:13px; text-align:right; }
+.stock-row { display:flex; align-items:baseline; justify-content:flex-end; gap:10px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.07); }
+.stock-row:last-child { border-bottom:none; }
+.stock-name { font-size:0.7rem; font-weight:300; color:rgba(255,255,255,0.38); min-width:76px; text-align:right; }
+.stock-price { font-family:'Outfit',sans-serif; font-size:1rem; font-weight:300; color:rgba(255,255,255,0.85); min-width:88px; text-align:right; }
+.stock-chg { font-size:0.7rem; font-weight:300; min-width:66px; text-align:right; }
+.up { color:#7de8b0; } .down { color:#f09090; } .flat { color:rgba(255,255,255,0.3); }
+
+.progress-bar-wrap { position:fixed; bottom:0; left:0; right:0; height:2px; background:rgba(255,255,255,0.07); z-index:10; }
+.progress-bar-fill { height:100%; background:rgba(255,255,255,0.25); width:0%; transition:width 0.1s linear; }
+.loading-text { color:rgba(255,255,255,0.28); font-size:0.78rem; font-weight:300; letter-spacing:2px; animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.8} }
+</style>
+</head>
+<body>
+
+<div class="bg-layer" id="bg-a"></div>
+<div class="bg-layer" id="bg-b"></div>
+<div id="photo-credit"></div>
+
+<div id="app">
+  <div class="top-row">
+    <div>
+      <div class="clock" id="clock">00:00</div>
+      <div class="date-line" id="dateStr">---</div>
+    </div>
+    <div class="weather-block" id="weather-block">
+      <div class="loading-text">날씨 로딩중</div>
+    </div>
+  </div>
+  <div class="bottom-row">
+    <div id="calendar"></div>
+    <div>
+      <div class="news-label">실시간 주요뉴스</div>
+      <div class="news-pages" id="news-pages">
+        <div style="padding:10px 0"><div class="loading-text">뉴스 불러오는 중</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="stocks-label">Markets</div>
+      <div id="stocks-list"><div class="loading-text" style="text-align:right">로딩중</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-bar-fill" id="progress-fill"></div>
+</div>
+
+<script>
+// ── 위키미디어 POTY 사진 ──
+const POTY = [
+  { file: 'Campamento de ganado de la tribu Mundari, Terekeka, Sudán del Sur, 2024-01-29, DD 242.jpg', title: '무운다리 부족 소 목장, 남수단', credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥇' },
+  { file: 'Fratercula arctica in flight, Borgarfjörður eystri, Iceland, 20240717 1136 1678.jpg',        title: '대서양 퍼핀, 아이슬란드',       credit: 'Jakub Hałun / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥈' },
+  { file: 'Incense in Vietnam.jpg',                                                                     title: '향 만들기, 쾅푸까우, 베트남',    credit: 'Vietsui / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥇' },
+  { file: 'Hunter baby chameleon.jpg',                                                                  title: '아기 카멜레온, 터키',            credit: 'Mkrc85 / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥉' },
+  { file: 'Foggy Fanal forest in Seixal, Porto Moniz, Madeira, 2023 May.jpg',                          title: '파나우 숲의 안개, 마데이라',     credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2023 finalist' },
+  { file: 'Kométa C-2020 F3 (NEOWISE).jpg',                                                            title: 'NEOWISE 혜성',                 credit: 'Wikimedia POTY 2023 finalist · CC-BY-SA 4.0' },
+  { file: 'Полярное сияние над заброшенным зданием метеостанцией.jpg',                                 title: '기상관측소 위의 오로라',         credit: 'Wikimedia POTY 2023 finalist · CC-BY-SA 4.0' },
+  { file: 'Phalacrocorax carbo, Egretta garzetta and Mareca strepera in Taudha Lake.jpg',              title: '타우다하 호수의 새들, 네팔',     credit: 'Prasan Shrestha / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥇' },
+  { file: 'Banna children playing on wooden stilts.jpg',                                                title: '에티오피아 바나 부족 어린이들',  credit: 'WAVRIK / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥈' },
+  { file: 'Rally in support of Ukraine in Columbus, Ohio, United States, 26 February 2022 (51906586684) - edited.jpg', title: '우크라이나 지지 집회, 미국 오하이오', credit: 'Becker1999 / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥈' },
+];
+
+// Wikimedia API로 실제 CDN URL 가져오기 (CORS 허용됨)
+async function getImageUrl(filename) {
+  const api = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=url&iiurlwidth=1920&format=json&origin=*`;
+  try {
+    const r = await fetch(api);
+    const d = await r.json();
+    const page = Object.values(d.query.pages)[0];
+    return page?.imageinfo?.[0]?.thumburl || null;
+  } catch(e) { return null; }
+}
+
+const urlCache = {};
+let bgActive = 'a';
+let bgIdx = Math.floor(Math.random() * POTY.length);
+
+function applyBg(idx) {
+  const url = urlCache[idx];
+  if (!url) return;
+  const photo = POTY[idx];
+  const nextId = bgActive === 'a' ? 'b' : 'a';
+  const layerNext = document.getElementById(`bg-${nextId}`);
+  const layerCurr = document.getElementById(`bg-${bgActive}`);
+  layerNext.style.backgroundImage = `url('${url}')`;
+  setTimeout(() => {
+    layerNext.style.opacity = '1';
+    layerCurr.style.opacity = '0';
+    bgActive = nextId;
+  }, 200);
+  document.getElementById('photo-credit').innerHTML = `${photo.title}<br>${photo.credit}`;
+}
+
+async function initPhotos() {
+  // 현재 사진부터 먼저 로드
+  const order = [...Array(POTY.length).keys()].map(i => (bgIdx + i) % POTY.length);
+  for (const i of order) {
+    const url = await getImageUrl(POTY[i].file);
+    if (url) {
+      urlCache[i] = url;
+      if (i === bgIdx) applyBg(i); // 첫 번째 로드되면 바로 표시
+    }
+  }
+}
+
+initPhotos();
+
+setInterval(() => {
+  const next = (bgIdx + 1) % POTY.length;
+  if (urlCache[next]) {
+    bgIdx = next;
+    applyBg(bgIdx);
+  }
+}, 5 * 60 * 1000);
+
+
+// ── 시계 ──
+const DAYS_KO = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+const MONTHS_KO = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('dateStr').textContent =
+    `${n.getFullYear()}년 ${MONTHS_KO[n.getMonth()]} ${n.getDate()}일  ${DAYS_KO[n.getDay()]}`;
+}
+setInterval(updateClock, 1000); updateClock();
+
+
+// ── 달력 ──
+function buildCalendar() {
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const prevDays = new Date(year, month, 0).getDate();
+  let h = `<div class="cal-month-label">${MONTHS_KO[month]} ${year}</div><div class="cal-grid">`;
+  h += `<div class="cal-dow sun">일</div><div class="cal-dow">월</div><div class="cal-dow">화</div>
+        <div class="cal-dow">수</div><div class="cal-dow">목</div><div class="cal-dow">금</div>
+        <div class="cal-dow sat">토</div>`;
+  for (let i=firstDay-1; i>=0; i--) h += `<div class="cal-day other">${prevDays-i}</div>`;
+  for (let d=1; d<=daysInMonth; d++) {
+    const dow=(firstDay+d-1)%7;
+    const cls = d===today?'today':dow===0?'sun':dow===6?'sat':'';
+    h += `<div class="cal-day ${cls}">${d}</div>`;
+  }
+  const rem = 42-(firstDay+daysInMonth);
+  for (let d=1; d<=Math.min(rem,7); d++) h += `<div class="cal-day other">${d}</div>`;
+  h += '</div>';
+  document.getElementById('calendar').innerHTML = h;
+}
+buildCalendar();
+
+
+// ── 날씨 ──
+async function loadWeather() {
+  try {
+    const r = await fetch('https://wttr.in/Busan?format=j1');
+    const d = await r.json();
+    const c = d.current_condition[0];
+    const wc = parseInt(c.weatherCode);
+    const iconMap = [[395,'❄️'],[389,'⛈️'],[308,'🌧️'],[296,'🌦️'],[263,'🌦️'],[227,'❄️'],[200,'⛈️'],[143,'🌫️'],[122,'☁️'],[116,'⛅'],[113,'☀️']];
+    const icon = (iconMap.find(([k])=>wc>=k)||['','🌤️'])[1];
+    const desc = c.lang_ko?.[0]?.value || c.weatherDesc[0].value;
+    const fc = d.weather.slice(0,3).map(w=>
+      `${new Date(w.date).getMonth()+1}/${new Date(w.date).getDate()} ${w.mintempC}°~${w.maxtempC}°`
+    ).join('  ');
+    document.getElementById('weather-block').innerHTML = `
+      <div class="weather-icon-big">${icon}</div>
+      <div class="weather-temp-big">${c.temp_C}°</div>
+      <div class="weather-desc">${desc} · 부산</div>
+      <div class="weather-sub">체감 ${c.FeelsLikeC}° · 습도 ${c.humidity}% · 바람 ${c.windspeedKmph}km/h<br>${fc}</div>`;
+  } catch(e) {
+    document.getElementById('weather-block').innerHTML = '<div class="loading-text">날씨 없음</div>';
+  }
+}
+loadWeather(); setInterval(loadWeather, 10*60*1000);
+
+
+// ── 주가 ──
+const STOCKS = [
+  {sym:'%5EKS11',name:'KOSPI'},{sym:'%5EKQ11',name:'KOSDAQ'},
+  {sym:'KRW=X',name:'USD/KRW'},{sym:'%5EGSPC',name:'S&P500'},
+  {sym:'%5EIXIC',name:'NASDAQ'},{sym:'GC=F',name:'Gold'},
+];
+async function fetchQ(sym) {
+  const url=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
+  const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+  const m=JSON.parse((await r.json()).contents).chart.result[0].meta;
+  return {price:m.regularMarketPrice, prev:m.chartPreviousClose};
+}
+function fmt(n){return n==null||isNaN(n)?'—':n.toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+async function loadStocks(){
+  const results=await Promise.allSettled(STOCKS.map(s=>fetchQ(s.sym)));
+  let h='';
+  results.forEach((r,i)=>{
+    const s=STOCKS[i];
+    if(r.status==='fulfilled'){
+      const {price,prev}=r.value, chg=price-prev, pct=chg/prev*100;
+      const dir=chg>0?'up':chg<0?'down':'flat', arrow=chg>0?'▲':chg<0?'▼':'—';
+      h+=`<div class="stock-row"><span class="stock-name">${s.name}</span><span class="stock-price">${fmt(price)}</span><span class="stock-chg ${dir}">${arrow} ${Math.abs(pct).toFixed(2)}%</span></div>`;
+    } else {
+      h+=`<div class="stock-row"><span class="stock-name">${s.name}</span><span class="stock-price" style="color:rgba(255,255,255,.2)">—</span></div>`;
+    }
+  });
+  document.getElementById('stocks-list').innerHTML=h;
+}
+loadStocks(); setInterval(loadStocks, 3*60*1000);
+
+
+// ── 뉴스 ──
+const PAGE_SIZE=4, NEWS_INTERVAL=20000;
+let allNews=[], currentPage=0, progressTimer=null, pageTimer=null;
+const FEEDS=[
+  {url:'https://www.yonhapnewstv.co.kr/browse/feed/', src:'연합뉴스'},
+  {url:'https://rss.donga.com/total.xml', src:'동아일보'},
+  {url:'https://www.hankyung.com/feed/all-news', src:'한국경제'},
+  {url:'https://www.khan.co.kr/rss/rssdata/total_news.xml', src:'경향신문'},
+  {url:'https://rss.etnews.com/Section901.xml', src:'전자신문'},
+];
+function timeAgo(ds){
+  const diff=(Date.now()-new Date(ds))/60000;
+  if(diff<1)return '방금'; if(diff<60)return `${Math.floor(diff)}분 전`;
+  if(diff<1440)return `${Math.floor(diff/60)}시간 전`; return `${Math.floor(diff/1440)}일 전`;
+}
+async function fetchRSS(feed){
+  const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`);
+  const xml=new DOMParser().parseFromString((await r.json()).contents,'text/xml');
+  return [...xml.querySelectorAll('item')].slice(0,12).map(el=>({
+    title:(el.querySelector('title')?.textContent||'').replace(/<!\[CDATA\[|\]\]>/g,'').replace(/<[^>]+>/g,'').trim(),
+    pubDate:el.querySelector('pubDate')?.textContent?.trim()||'', src:feed.src
+  })).filter(it=>it.title.length>4);
+}
+async function loadNews(){
+  const items=[];
+  await Promise.allSettled(FEEDS.map(async f=>{try{items.push(...await fetchRSS(f));}catch(e){}}));
+  if(!items.length) return;
+  const seen=new Set();
+  allNews=items.filter(i=>{if(seen.has(i.title))return false;seen.add(i.title);return true;})
+    .sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate));
+  currentPage=0; renderNews(); startAutoPage();
+}
+function renderNews(){
+  const c=document.getElementById('news-pages');
+  const total=Math.ceil(allNews.length/PAGE_SIZE);
+  c.innerHTML='';
+  for(let p=0;p<total;p++){
+    const pg=document.createElement('div');
+    pg.className='news-page'+(p===0?' active':'');
+    allNews.slice(p*PAGE_SIZE,(p+1)*PAGE_SIZE).forEach((item,idx)=>{
+      const el=document.createElement('div'); el.className='news-item';
+      el.innerHTML=`<div class="news-idx">${p*PAGE_SIZE+idx+1}</div>
+        <div class="news-content">
+          <div class="news-meta">${item.src} · ${timeAgo(item.pubDate)}</div>
+          <div class="news-title">${item.title}</div>
+        </div>`;
+      pg.appendChild(el);
+    });
+    c.appendChild(pg);
+  }
+}
+function showPage(idx){
+  const pages=document.querySelectorAll('.news-page'); if(!pages.length)return;
+  pages[currentPage]?.classList.remove('active');
+  currentPage=((idx%pages.length)+pages.length)%pages.length;
+  pages.forEach((p,i)=>{
+    if(i===currentPage){p.style.position='relative';p.classList.add('active');}
+    else{p.style.position='absolute';p.classList.remove('active');}
+  });
+}
+function startAutoPage(){
+  if(progressTimer)clearInterval(progressTimer); if(pageTimer)clearInterval(pageTimer);
+  const fill=document.getElementById('progress-fill');
+  let elapsed=0;
+  fill.style.width='0%';
+  progressTimer=setInterval(()=>{elapsed+=100;fill.style.width=Math.min(elapsed/NEWS_INTERVAL*100,100)+'%';},100);
+  pageTimer=setInterval(()=>{elapsed=0;fill.style.width='0%';showPage(currentPage+1);},NEWS_INTERVAL);
+}
+loadNews(); setInterval(loadNews, 5*60*1000);
+</script>
+</body>
+</html>
