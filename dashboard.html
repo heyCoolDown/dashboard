@@ -117,79 +117,73 @@ body { width:100vw; height:100vh; overflow:hidden; font-family:'Outfit','Noto Sa
 </div>
 
 <script>
-// ── 위키미디어 POTY 사진 ──
+// ── 위키미디어 POTY 사진 (직접 upload.wikimedia.org CDN URL) ──
+// CSS background-image는 CORS 없음, 리다이렉트도 자동 처리
 const POTY = [
-  { file: 'Campamento de ganado de la tribu Mundari, Terekeka, Sudán del Sur, 2024-01-29, DD 242.jpg', title: '무운다리 부족 소 목장, 남수단', credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥇' },
-  { file: 'Fratercula arctica in flight, Borgarfjörður eystri, Iceland, 20240717 1136 1678.jpg',        title: '대서양 퍼핀, 아이슬란드',       credit: 'Jakub Hałun / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥈' },
-  { file: 'Incense in Vietnam.jpg',                                                                     title: '향 만들기, 쾅푸까우, 베트남',    credit: 'Vietsui / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥇' },
-  { file: 'Hunter baby chameleon.jpg',                                                                  title: '아기 카멜레온, 터키',            credit: 'Mkrc85 / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥉' },
-  { file: 'Foggy Fanal forest in Seixal, Porto Moniz, Madeira, 2023 May.jpg',                          title: '파나우 숲의 안개, 마데이라',     credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2023 finalist' },
-  { file: 'Kométa C-2020 F3 (NEOWISE).jpg',                                                            title: 'NEOWISE 혜성',                 credit: 'Wikimedia POTY 2023 finalist · CC-BY-SA 4.0' },
-  { file: 'Полярное сияние над заброшенным зданием метеостанцией.jpg',                                 title: '기상관측소 위의 오로라',         credit: 'Wikimedia POTY 2023 finalist · CC-BY-SA 4.0' },
-  { file: 'Phalacrocorax carbo, Egretta garzetta and Mareca strepera in Taudha Lake.jpg',              title: '타우다하 호수의 새들, 네팔',     credit: 'Prasan Shrestha / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥇' },
-  { file: 'Banna children playing on wooden stilts.jpg',                                                title: '에티오피아 바나 부족 어린이들',  credit: 'WAVRIK / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥈' },
-  { file: 'Rally in support of Ukraine in Columbus, Ohio, United States, 26 February 2022 (51906586684) - edited.jpg', title: '우크라이나 지지 집회, 미국 오하이오', credit: 'Becker1999 / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥈' },
+  {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Campamento_de_ganado_de_la_tribu_Mundari%2C_Terekeka%2C_Sud%C3%A1n_del_Sur%2C_2024-01-29%2C_DD_242.jpg/1920px-Campamento_de_ganado_de_la_tribu_Mundari%2C_Terekeka%2C_Sud%C3%A1n_del_Sur%2C_2024-01-29%2C_DD_242.jpg',
+    title: '무운다리 부족 소 목장, 남수단', credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥇'
+  },
+  {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Incense_in_Vietnam.jpg/1920px-Incense_in_Vietnam.jpg',
+    title: '향 만들기, 쾅푸까우, 베트남', credit: 'Vietsui / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥇'
+  },
+  {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Hunter_baby_chameleon.jpg/1920px-Hunter_baby_chameleon.jpg',
+    title: '아기 카멜레온, 터키', credit: 'Mkrc85 / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥉'
+  },
+  {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Foggy_Fanal_forest_in_Seixal%2C_Porto_Moniz%2C_Madeira%2C_2023_May.jpg/1920px-Foggy_Fanal_forest_in_Seixal%2C_Porto_Moniz%2C_Madeira%2C_2023_May.jpg',
+    title: '파나우 숲의 안개, 마데이라', credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2023 finalist'
+  },
+  {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Kom%C3%A9ta_C-2020_F3_%28NEOWISE%29.jpg/1920px-Kom%C3%A9ta_C-2020_F3_%28NEOWISE%29.jpg',
+    title: 'NEOWISE 혜성', credit: 'Wikimedia POTY 2023 finalist · CC-BY-SA 4.0'
+  },
+  {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Phalacrocorax_carbo%2C_Egretta_garzetta_and_Mareca_strepera_in_Taudha_Lake.jpg/1920px-Phalacrocorax_carbo%2C_Egretta_garzetta_and_Mareca_strepera_in_Taudha_Lake.jpg',
+    title: '타우다하 호수의 새들, 네팔', credit: 'Prasan Shrestha / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥇'
+  },
+  {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Banna_children_playing_on_wooden_stilts.jpg/1920px-Banna_children_playing_on_wooden_stilts.jpg',
+    title: '에티오피아 바나 부족 어린이들', credit: 'WAVRIK / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥈'
+  },
 ];
 
-// Wikimedia API로 실제 CDN URL 가져오기 (CORS 허용됨)
-async function getImageUrl(filename) {
-  const api = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=url&iiurlwidth=1920&format=json&origin=*`;
-  try {
-    const r = await fetch(api);
-    const d = await r.json();
-    const page = Object.values(d.query.pages)[0];
-    return page?.imageinfo?.[0]?.thumburl || null;
-  } catch(e) { return null; }
-}
-
-const urlCache = {};
 let bgActive = 'a';
-let bgIdx = Math.floor(Math.random() * POTY.length);
+let bgIdx = 0;
 
-function applyBg(idx) {
-  const url = urlCache[idx];
-  if (!url) return;
+function applyBg(idx, fade = true) {
   const photo = POTY[idx];
-  const nextId = bgActive === 'a' ? 'b' : 'a';
-  const layerNext = document.getElementById(`bg-${nextId}`);
-  const layerCurr = document.getElementById(`bg-${bgActive}`);
-  layerNext.style.backgroundImage = `url('${url}')`;
-  setTimeout(() => {
-    layerNext.style.opacity = '1';
-    layerCurr.style.opacity = '0';
-    bgActive = nextId;
-  }, 200);
+  if (fade) {
+    const nextId = bgActive === 'a' ? 'b' : 'a';
+    const layerNext = document.getElementById(`bg-${nextId}`);
+    const layerCurr = document.getElementById(`bg-${bgActive}`);
+    // 이미지 미리 로드 후 표시
+    const img = new Image();
+    img.onload = () => {
+      layerNext.style.backgroundImage = `url('${photo.url}')`;
+      setTimeout(() => {
+        layerNext.style.opacity = '1';
+        layerCurr.style.opacity = '0';
+        bgActive = nextId;
+      }, 100);
+    };
+    img.src = photo.url;
+  } else {
+    const layer = document.getElementById(`bg-${bgActive}`);
+    layer.style.backgroundImage = `url('${photo.url}')`;
+  }
   document.getElementById('photo-credit').innerHTML = `${photo.title}<br>${photo.credit}`;
 }
 
-async function initPhotos() {
-  let firstShown = false;
-  // 병렬로 전부 요청 - 먼저 응답 오는 것부터 표시
-  await Promise.allSettled(POTY.map(async (p, i) => {
-    const url = await getImageUrl(p.file);
-    if (url) {
-      urlCache[i] = url;
-      if (!firstShown) {
-        firstShown = true;
-        bgIdx = i;
-        applyBg(i);
-      }
-    }
-  }));
-}
+// 첫 사진 즉시 적용
+applyBg(0, false);
 
-initPhotos();
-
+// 5분마다 전환
 setInterval(() => {
-  // urlCache에서 다음으로 사용 가능한 인덱스 탐색
-  for (let t = 1; t <= POTY.length; t++) {
-    const next = (bgIdx + t) % POTY.length;
-    if (urlCache[next]) {
-      bgIdx = next;
-      applyBg(bgIdx);
-      break;
-    }
-  }
+  bgIdx = (bgIdx + 1) % POTY.length;
+  applyBg(bgIdx, true);
 }, 5 * 60 * 1000);
 
 
