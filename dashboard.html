@@ -163,24 +163,32 @@ function applyBg(idx) {
 }
 
 async function initPhotos() {
-  // 현재 사진부터 먼저 로드
-  const order = [...Array(POTY.length).keys()].map(i => (bgIdx + i) % POTY.length);
-  for (const i of order) {
-    const url = await getImageUrl(POTY[i].file);
+  let firstShown = false;
+  // 병렬로 전부 요청 - 먼저 응답 오는 것부터 표시
+  await Promise.allSettled(POTY.map(async (p, i) => {
+    const url = await getImageUrl(p.file);
     if (url) {
       urlCache[i] = url;
-      if (i === bgIdx) applyBg(i); // 첫 번째 로드되면 바로 표시
+      if (!firstShown) {
+        firstShown = true;
+        bgIdx = i;
+        applyBg(i);
+      }
     }
-  }
+  }));
 }
 
 initPhotos();
 
 setInterval(() => {
-  const next = (bgIdx + 1) % POTY.length;
-  if (urlCache[next]) {
-    bgIdx = next;
-    applyBg(bgIdx);
+  // urlCache에서 다음으로 사용 가능한 인덱스 탐색
+  for (let t = 1; t <= POTY.length; t++) {
+    const next = (bgIdx + t) % POTY.length;
+    if (urlCache[next]) {
+      bgIdx = next;
+      applyBg(bgIdx);
+      break;
+    }
   }
 }, 5 * 60 * 1000);
 
