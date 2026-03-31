@@ -117,53 +117,105 @@ body { width:100vw; height:100vh; overflow:hidden; font-family:'Outfit','Noto Sa
 </div>
 
 <script>
-// ── 위키미디어 POTY 사진 (Special:FilePath → CDN 리다이렉트) ──
-const W = (f) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(f)}?width=1920`;
+// ── 위키미디어 추천사진 (Featured Pictures) 랜덤 15장 ──
+// 매일 새로 가져오고, 당일은 sessionStorage에 캐시 (데이터 절약)
 
-const POTY = [
-  { url: W('Campamento de ganado de la tribu Mundari, Terekeka, Sudán del Sur, 2024-01-29, DD 242.jpg'), title: '무운다리 부족 소 목장, 남수단', credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥇' },
-  { url: W('Incense in Vietnam.jpg'),                                                                     title: '향 만들기, 쾅푸까우, 베트남',    credit: 'Vietsui / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥇' },
-  { url: W('Hunter baby chameleon.jpg'),                                                                  title: '아기 카멜레온, 터키',            credit: 'Mkrc85 / CC-BY-SA 4.0 · Wikimedia POTY 2023 🥉' },
-  { url: W('Foggy Fanal forest in Seixal, Porto Moniz, Madeira, 2023 May.jpg'),                          title: '파나우 숲의 안개, 마데이라',     credit: 'Diego Delso / CC-BY-SA 4.0 · Wikimedia POTY 2023 finalist' },
-  { url: W('Kométa C-2020 F3 (NEOWISE).jpg'),                                                           title: 'NEOWISE 혜성',                 credit: 'Wikimedia POTY 2023 finalist · CC-BY-SA 4.0' },
-  { url: W('Phalacrocorax carbo, Egretta garzetta and Mareca strepera in Taudha Lake.jpg'),              title: '타우다하 호수의 새들, 네팔',     credit: 'Prasan Shrestha / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥇' },
-  { url: W('Banna children playing on wooden stilts.jpg'),                                               title: '에티오피아 바나 부족 어린이들',  credit: 'WAVRIK / CC-BY-SA 4.0 · Wikimedia POTY 2022 🥈' },
-  { url: W('Fratercula arctica in flight, Borgarfjörður eystri, Iceland, 20240717 1136 1678.jpg'),       title: '대서양 퍼핀, 아이슬란드',       credit: 'Jakub Hałun / CC-BY-SA 4.0 · Wikimedia POTY 2024 🥈' },
-];
-
+let photos = [];
 let bgActive = 'a';
 let bgIdx = 0;
 
 function applyBg(idx, fade = true) {
-  const photo = POTY[idx];
-  const img = new Image();
-  img.onload = () => {
-    if (fade) {
-      const nextId = bgActive === 'a' ? 'b' : 'a';
-      const layerNext = document.getElementById(`bg-${nextId}`);
-      const layerCurr = document.getElementById(`bg-${bgActive}`);
-      layerNext.style.backgroundImage = `url('${photo.url}')`;
-      setTimeout(() => {
-        layerNext.style.opacity = '1';
-        layerCurr.style.opacity = '0';
-        bgActive = nextId;
-      }, 100);
-    } else {
-      document.getElementById(`bg-${bgActive}`).style.backgroundImage = `url('${photo.url}')`;
-    }
-    document.getElementById('photo-credit').innerHTML = `${photo.title}<br>${photo.credit}`;
-  };
-  img.src = photo.url;
+  if (!photos.length) return;
+  const photo = photos[idx];
+  if (fade) {
+    const nextId = bgActive === 'a' ? 'b' : 'a';
+    const layerNext = document.getElementById(`bg-${nextId}`);
+    const layerCurr = document.getElementById(`bg-${bgActive}`);
+    layerNext.style.backgroundImage = `url('${photo.url}')`;
+    setTimeout(() => {
+      layerNext.style.opacity = '1';
+      layerCurr.style.opacity = '0';
+      bgActive = nextId;
+    }, 500);
+  } else {
+    document.getElementById(`bg-${bgActive}`).style.backgroundImage = `url('${photo.url}')`;
+  }
+  document.getElementById('photo-credit').innerHTML =
+    `${photo.title}<br>${photo.credit}`;
 }
 
-// 첫 사진 로드
-applyBg(0, false);
+async function fetchFeaturedPhotos() {
+  // 오늘 날짜 키로 캐시 확인 (하루 1회만 API 호출)
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const cached = sessionStorage.getItem('wm_photos_' + todayKey);
+  if (cached) return JSON.parse(cached);
 
-// 5분마다 전환
+  // 랜덤 시작 알파벳으로 다양한 사진 가져오기
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const letter = letters[Math.floor(Math.random() * letters.length)];
+
+  const api = `https://commons.wikimedia.org/w/api.php?action=query` +
+    `&generator=categorymembers` +
+    `&gcmtitle=Category:Featured_pictures_on_Wikimedia_Commons` +
+    `&gcmlimit=50&gcmtype=file` +
+    `&gcmstartsortkeyprefix=${letter}` +
+    `&prop=imageinfo` +
+    `&iiprop=url|extmetadata` +
+    `&iiurlwidth=1920` +
+    `&format=json&origin=*`;
+
+  const r = await fetch(api);
+  const d = await r.json();
+  const pages = Object.values(d.query?.pages || {});
+
+  const result = pages
+    .filter(p => {
+      const url = p.imageinfo?.[0]?.thumburl || '';
+      return url.match(/\.(jpg|jpeg|png)/i);
+    })
+    .map(p => {
+      const info = p.imageinfo[0];
+      const meta = info.extmetadata || {};
+      const rawTitle = meta.ImageDescription?.value || p.title.replace('File:', '').replace(/\.[^.]+$/, '');
+      const title = rawTitle.replace(/<[^>]+>/g, '').trim().slice(0, 60);
+      const rawCredit = meta.Artist?.value || 'Wikimedia Commons';
+      const credit = rawCredit.replace(/<[^>]+>/g, '').trim().slice(0, 50) + ' / CC-BY-SA';
+      return { url: info.thumburl, title, credit };
+    })
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 15);
+
+  if (result.length > 0) {
+    sessionStorage.setItem('wm_photos_' + todayKey, JSON.stringify(result));
+  }
+  return result;
+}
+
+async function initPhotos() {
+  try {
+    photos = await fetchFeaturedPhotos();
+    if (photos.length > 0) {
+      bgIdx = 0;
+      applyBg(0, false);
+    }
+  } catch(e) {
+    console.log('사진 로드 실패:', e);
+  }
+}
+
+initPhotos();
+
+// 5분마다 다음 사진으로 전환
 setInterval(() => {
-  bgIdx = (bgIdx + 1) % POTY.length;
+  if (!photos.length) return;
+  bgIdx = (bgIdx + 1) % photos.length;
   applyBg(bgIdx, true);
 }, 5 * 60 * 1000);
+
+// 자정에 새 사진 세트 로드
+const now = new Date();
+const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1) - now;
+setTimeout(() => { initPhotos(); setInterval(initPhotos, 24*60*60*1000); }, msToMidnight);
 
 
 // ── 시계 ──
