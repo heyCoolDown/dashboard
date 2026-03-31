@@ -256,24 +256,54 @@ function buildCalendar() {
 buildCalendar();
 
 
-// ── 날씨 ──
+// ── 날씨 (OpenWeatherMap) ──
+const OWM_KEY = 'f1807ac533dd55096b84c0425b18d0d4'; // 여기에 API 키 입력
+const OWM_CITY = 'Busan,KR';
+
 async function loadWeather() {
   try {
-    const r = await fetch('https://wttr.in/Busan?format=j1');
+    const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${OWM_CITY}&appid=${OWM_KEY}&units=metric&lang=kr`);
     const d = await r.json();
-    const c = d.current_condition[0];
-    const wc = parseInt(c.weatherCode);
-    const iconMap = [[395,'❄️'],[389,'⛈️'],[308,'🌧️'],[296,'🌦️'],[263,'🌦️'],[227,'❄️'],[200,'⛈️'],[143,'🌫️'],[122,'☁️'],[116,'⛅'],[113,'☀️']];
-    const icon = (iconMap.find(([k])=>wc>=k)||['','🌤️'])[1];
-    const desc = c.lang_ko?.[0]?.value || c.weatherDesc[0].value;
-    const fc = d.weather.slice(0,3).map(w=>
-      `${new Date(w.date).getMonth()+1}/${new Date(w.date).getDate()} ${w.mintempC}°~${w.maxtempC}°`
-    ).join('  ');
+    const temp = Math.round(d.main.temp);
+    const feels = Math.round(d.main.feels_like);
+    const humidity = d.main.humidity;
+    const windMs = d.wind.speed;
+    const windKmh = Math.round(windMs * 3.6);
+    const desc = d.weather[0].description;
+    const wid = d.weather[0].id;
+
+    // 날씨 아이콘 매핑
+    const icon =
+      wid >= 800 && wid === 800 ? '☀️' :
+      wid > 800 ? '⛅' :
+      wid >= 700 ? '🌫️' :
+      wid >= 600 ? '❄️' :
+      wid >= 500 ? '🌧️' :
+      wid >= 300 ? '🌦️' :
+      wid >= 200 ? '⛈️' : '🌤️';
+
+    // 3일 예보
+    const fc = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${OWM_CITY}&appid=${OWM_KEY}&units=metric&lang=kr&cnt=24`);
+    const fd = await fc.json();
+
+    // 하루치 대표값 추출 (3개)
+    const days = {};
+    fd.list.forEach(item => {
+      const date = item.dt_txt.slice(0, 10);
+      if (!days[date]) days[date] = {min: 999, max: -999};
+      days[date].min = Math.min(days[date].min, item.main.temp_min);
+      days[date].max = Math.max(days[date].max, item.main.temp_max);
+    });
+    const fcStr = Object.entries(days).slice(1, 4).map(([date, v]) => {
+      const d = new Date(date);
+      return `${d.getMonth()+1}/${d.getDate()} ${Math.round(v.min)}°~${Math.round(v.max)}°`;
+    }).join('  ');
+
     document.getElementById('weather-block').innerHTML = `
       <div class="weather-icon-big">${icon}</div>
-      <div class="weather-temp-big">${c.temp_C}°</div>
+      <div class="weather-temp-big">${temp}°</div>
       <div class="weather-desc">${desc} · 부산</div>
-      <div class="weather-sub">체감 ${c.FeelsLikeC}° · 습도 ${c.humidity}% · 바람 ${c.windspeedKmph}km/h<br>${fc}</div>`;
+      <div class="weather-sub">체감 ${feels}° · 습도 ${humidity}% · 바람 ${windKmh}km/h<br>${fcStr}</div>`;
   } catch(e) {
     document.getElementById('weather-block').innerHTML = '<div class="loading-text">날씨 없음</div>';
   }
