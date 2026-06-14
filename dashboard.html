@@ -273,8 +273,9 @@ async function loadWeather() {
     const wid = d.weather[0].id;
 
     // 날씨 아이콘 매핑
+    const isNight = d.weather[0].icon?.endsWith('n');
     const icon =
-      wid >= 800 && wid === 800 ? '☀️' :
+      wid === 800 ? (isNight ? '🌙' : '☀️') :
       wid > 800 ? '⛅' :
       wid >= 700 ? '🌫️' :
       wid >= 600 ? '❄️' :
@@ -317,20 +318,37 @@ const STOCKS = [
   {sym:'KRW=X',name:'USD/KRW'},{sym:'%5EGSPC',name:'S&P500'},
   {sym:'%5EIXIC',name:'NASDAQ'},{sym:'GC=F',name:'Gold'},
 ];
+async function fetchViaProxy(targetUrl) {
+  const proxies = [
+    async u => { const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,{signal:AbortSignal.timeout(8000)}); return (await r.json()).contents; },
+    async u => { const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(u)}`,{signal:AbortSignal.timeout(8000)}); if(!r.ok) throw new Error(r.status); return await r.text(); },
+  ];
+  for (const proxy of proxies) {
+    try { const t=await proxy(targetUrl); if(t) return t; } catch(e) { console.warn('프록시 실패:',e.message); }
+  }
+  throw new Error('모든 프록시 실패');
+}
 async function fetchQ(sym) {
-  const url=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
-  const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-  const m=JSON.parse((await r.json()).contents).chart.result[0].meta;
-  return {price:m.regularMarketPrice, prev:m.chartPreviousClose};
+  for (const host of ['query1','query2']) {
+    try {
+      const url=`https://${host}.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
+      const m=JSON.parse(await fetchViaProxy(url)).chart.result[0].meta;
+      return {price:m.regularMarketPrice, prev:m.chartPreviousClose};
+    } catch(e) { console.warn(`Yahoo ${host} 실패 (${sym}):`,e.message); }
+  }
+  throw new Error(`${sym} 데이터 없음`);
 }
 function fmt(n){return n==null||isNaN(n)?'—':n.toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+const lastStockData={};
 async function loadStocks(){
   const results=await Promise.allSettled(STOCKS.map(s=>fetchQ(s.sym)));
-  let h='';
+  let h='', anySuccess=false;
   results.forEach((r,i)=>{
     const s=STOCKS[i];
-    if(r.status==='fulfilled'){
-      const {price,prev}=r.value, chg=price-prev, pct=chg/prev*100;
+    if(r.status==='fulfilled'){lastStockData[s.sym]=r.value; anySuccess=true;}
+    const data=lastStockData[s.sym];
+    if(data){
+      const {price,prev}=data, chg=price-prev, pct=chg/prev*100;
       const dir=chg>0?'up':chg<0?'down':'flat', arrow=chg>0?'▲':chg<0?'▼':'—';
       h+=`<div class="stock-row"><span class="stock-name">${s.name}</span><span class="stock-price">${fmt(price)}</span><span class="stock-chg ${dir}">${arrow} ${Math.abs(pct).toFixed(2)}%</span></div>`;
     } else {
@@ -338,6 +356,7 @@ async function loadStocks(){
     }
   });
   document.getElementById('stocks-list').innerHTML=h;
+  if(!anySuccess) setTimeout(loadStocks, 30*1000);
 }
 loadStocks(); setInterval(loadStocks, 3*60*1000);
 
@@ -358,8 +377,8 @@ function timeAgo(ds){
   if(diff<1440)return `${Math.floor(diff/60)}시간 전`; return `${Math.floor(diff/1440)}일 전`;
 }
 async function fetchRSS(feed){
-  const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`);
-  const xml=new DOMParser().parseFromString((await r.json()).contents,'text/xml');
+  const text=await fetchViaProxy(feed.url);
+  const xml=new DOMParser().parseFromString(text,'text/xml');
   return [...xml.querySelectorAll('item')].slice(0,12).map(el=>({
     title:(el.querySelector('title')?.textContent||'').replace(/<!\[CDATA\[|\]\]>/g,'').replace(/<[^>]+>/g,'').trim(),
     pubDate:el.querySelector('pubDate')?.textContent?.trim()||'', src:feed.src
@@ -367,8 +386,8 @@ async function fetchRSS(feed){
 }
 async function loadNews(){
   const items=[];
-  await Promise.allSettled(FEEDS.map(async f=>{try{items.push(...await fetchRSS(f));}catch(e){}}));
-  if(!items.length) return;
+  await Promise.allSettled(FEEDS.map(async f=>{try{items.push(...await fetchRSS(f));}catch(e){console.warn(`뉴스 피드 실패 (${f.src}):`,e.message);}}));
+  if(!items.length){if(!allNews.length) setTimeout(loadNews, 30*1000); return;}
   const seen=new Set();
   allNews=items.filter(i=>{if(seen.has(i.title))return false;seen.add(i.title);return true;})
     .sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate));
