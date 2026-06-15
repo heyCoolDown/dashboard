@@ -362,7 +362,7 @@ loadStocks(); setInterval(loadStocks, 3*60*1000);
 
 
 // ── 뉴스 ──
-const PAGE_SIZE=4, NEWS_INTERVAL=20000;
+const PAGE_SIZE=4, NEWS_INTERVAL=60000;
 let allNews=[], currentPage=0, progressTimer=null, pageTimer=null;
 const FEEDS=[
   {url:'https://www.yonhapnewstv.co.kr/browse/feed/', src:'연합뉴스'},
